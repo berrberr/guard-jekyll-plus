@@ -85,7 +85,8 @@ module Guard
     def run_on_modifications(paths)
       matched = jekyll_matches paths
       unmatched = non_jekyll_matches paths
-
+      puts "MODIFIED: #{paths.inspect} MATCHED: #{matched} UNMATCHED: #{unmatched}"
+      puts @config.inspect
       if matched.size > 0
         build(matched, "Files changed: ", "  ~ ".yellow)
       elsif unmatched.size > 0
