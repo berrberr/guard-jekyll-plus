@@ -85,12 +85,14 @@ module Guard
     def run_on_modifications(paths)
       matched = jekyll_matches paths
       unmatched = non_jekyll_matches paths
-      puts "MODIFIED: #{paths.inspect} MATCHED: #{matched} UNMATCHED: #{unmatched}"
-      puts @config.inspect
-      if matched.size > 0
-        build(matched, "Files changed: ", "  ~ ".yellow)
-      elsif unmatched.size > 0
-        copy(unmatched)
+      if(!check_jekyll_exclude(paths))
+        if matched.size > 0
+          build(matched, "Files changed: ", "  ~ ".yellow)
+        elsif unmatched.size > 0
+          copy(unmatched)
+        end
+      else
+        UI.info "'#{paths[0]}' was found in Jekyll exclude, not copying"
       end
     end
 
@@ -228,6 +230,13 @@ module Guard
         config = options
       end
       ::Jekyll.configuration(config)
+    end
+
+    def check_jekyll_exclude(path)
+      @config['exclude'].each do |excluded|
+        if(path[0].eql? excluded) then return true end
+      end
+      return false
     end
 
     def rack_config(root)
