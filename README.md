@@ -1,5 +1,6 @@
 # Guard Jekyll Plus
 
+
 A Guard plugin for smarter Jekyll watching.
 
 [![Gem Version](https://badge.fury.io/rb/guard-jekyll-plus.png)](http://badge.fury.io/rb/guard-jekyll-plus)
@@ -12,6 +13,12 @@ Features:
 - Supports multiple config files (Jekyll 1.0)
 - Serve with Jekyll or Rack (just add rack to your gemfile)
 - Clear and colorized output
+
+Fixes since v1.4.10:
+
+- Added support for Guard > v2.0
+- Added support for Jekyll > v2.0
+- Fixed copying of Jekyll excluded files
 
 If you want to compile javascripts, take a look at [guard-stitch-plus](https://github.com/imathis/guard-stitch-plus) and [jekyll-stitch-plus](https://github.com/imathis/jekyll-stitch-plus).
 
