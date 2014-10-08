@@ -4,12 +4,15 @@ require 'benchmark'
 require 'guard/plugin'
 require 'jekyll'
 
+class ExcludedFileException < StandardError; end
+
 module Guard
   class Jekyllplus < Plugin
     begin
       require 'rack'
       @@use_rack = true
     rescue LoadError
+      @@use_rack = false
     end
 
     def initialize(options = {})
@@ -127,6 +130,14 @@ module Guard
 
     def build(files = nil, message = '', mark = nil)
       begin
+        if files
+          files.each do |file|
+            if check_jekyll_exclude(file)
+              puts '|' + "  ~ ".yellow + "'#{file}' detected in Jekyll exclude, not building".yellow unless @config[:silent]
+              raise ExcludedFileException, "'#{file}'"
+            end
+          end
+        end
         UI.info "#{@msg_prefix} #{message}" + "building...".yellow unless @config[:silent]
         if files
           puts '| ' # spacing
@@ -135,7 +146,9 @@ module Guard
         end
         elapsed = Benchmark.realtime { ::Jekyll::Site.new(@config).process }
         UI.info "#{@msg_prefix} " + "build completed in #{elapsed.round(2)}s ".green + "#{@source} → #{@destination}" unless @config[:silent]
-      rescue Exception
+      rescue ExcludedFileException => e
+        UI.info "#{@msg_prefix} skip build on file: #{e}" unless @config[:silent]
+      rescue
         UI.error "#{@msg_prefix} build has failed" unless @config[:silent]
         stop_server
         throw :task_has_failed
@@ -153,13 +166,13 @@ module Guard
           UI.info "#{@msg_prefix} #{message.green}" unless @config[:silent]
           puts '| ' #spacing
           files.each do |file|
-            if(!check_jekyll_exclude(file))
+            if !check_jekyll_exclude(file)
               path = destination_path file
               FileUtils.mkdir_p File.dirname(path)
               FileUtils.cp file, path
               puts '|' + "  → ".green + path
             else
-              puts '|' + "  ~ ".yellow + "'#{file}' detected in Jekyll exclude, not copying".red
+              puts '|' + "  ~ ".yellow + "'#{file}' detected in Jekyll exclude, not copying".red unless @config[:silent]
             end
           end
           puts '| ' #spacing
@@ -240,7 +253,7 @@ module Guard
     end
 
     def check_jekyll_exclude(path)
-      return @config['exclude'].any? {|f| File.fnmatch?(path, f)}
+      return @config['exclude'].any? {|f| File.fnmatch?(f, path)}
     end
 
     def rack_config(root)
